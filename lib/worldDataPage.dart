@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:covid19_info/dataSource.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:covid19_info/regionModel.dart';
+
+const TextStyle regularText =  TextStyle(fontSize: 18.0, fontWeight: FontWeight.w500);
+const TextStyle dropDownSelectedText = TextStyle(fontSize: 24.0, fontWeight: FontWeight.w700, color: Colors.black);
+const TextStyle dropDownItemText = TextStyle(fontSize: 18.0, fontWeight: FontWeight.w700, color: Colors.black87);
 
 class WorldDataPage extends StatefulWidget {
   @override
@@ -7,6 +14,9 @@ class WorldDataPage extends StatefulWidget {
 }
 
 class _WorldDataPageState extends State<WorldDataPage> {
+
+  //TODO: Figure out how to use Consumer to send API call with the RegionModel
+  //Consumer<RegionModel>(builder: (context, reg, child) => Text(reg.region)),
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,6 +28,12 @@ class _WorldDataPageState extends State<WorldDataPage> {
             ],
           ),
         ),
+    );
+  }
+
+  Widget questionSection() {
+    return Container(
+      child:
     );
   }
 }
@@ -32,43 +48,53 @@ class HeaderSection extends StatefulWidget {
 
 class _HeaderSectionState extends State<HeaderSection>{
 
-  String _selectedVal;
+  String _selectedVal = 'United States of America';
+  var dt = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
+    var date = new DateFormat.yMMMMEEEEd().format(dt);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Container(
           child: Text(
             (widget.isWorld ? "World " : "US ") + "Current Outbreak",
-            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w500)
+            style: regularText,
           ),
         ),
         Container(
-          margin: EdgeInsets.only(top: 5.0),
+          margin: EdgeInsets.only(top: 6.0),
           width: double.infinity,
-          height: 200.0,
+          height: 35.0,
           child: DropdownButton<String>(
-            hint: Text("Select a country", style: TextStyle(fontSize: 28.0, fontWeight: FontWeight.w700, color: Colors.black)),
+            //hint: Text("Select a country", style: dropDownSelectedText),
             isExpanded: true,
+            underline: Container(),
             value: _selectedVal,
             selectedItemBuilder: (BuildContext context) {
               return DataSource.countries.map<Widget>((String country) {
-                return Text(country, style: TextStyle(fontSize: 28.0, fontWeight: FontWeight.w700, color: Colors.black));
+                return Text(country, style: dropDownSelectedText);
               }).toList();
             },
             items: DataSource.countries.map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
                 value: value,
-                child: Text(value, style: TextStyle(fontSize: 12.0, fontWeight: FontWeight.w700, color: Colors.grey)),
+                child: Text(value, style: dropDownItemText),
               );
             }).toList(),
             onChanged: (newVal) {
+              Provider.of<RegionModel>(context, listen: false).setRegion(newVal);
               setState(() {
                 _selectedVal = newVal;
               });
             },
+          ),
+        ),
+        Container(
+          child: Text(
+            date,
+            style: regularText,
           ),
         ),
       ],
