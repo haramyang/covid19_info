@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:covid19_info/infoPage.dart';
-import 'package:provider/provider.dart';
-import 'package:covid19_info/regionModel.dart';
 
-void main() => runApp(
-    ChangeNotifierProvider(
-      create: (context) => RegionModel(),
-      child: MyApp(),
-    ),
-);
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.

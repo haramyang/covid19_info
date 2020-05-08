@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:covid19_info/dataSource.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-import 'package:covid19_info/regionModel.dart';
+import 'package:http/http.dart' as http;
 
 const TextStyle regularText =  TextStyle(fontSize: 18.0, fontWeight: FontWeight.w500);
 const TextStyle dropDownSelectedText = TextStyle(fontSize: 24.0, fontWeight: FontWeight.w700, color: Colors.black);
@@ -15,21 +14,25 @@ class WorldDataPage extends StatefulWidget {
 
 class _WorldDataPageState extends State<WorldDataPage> {
 
-  //TODO: Figure out how to use Consumer to send API call with the RegionModel
-  //Consumer<RegionModel>(builder: (context, reg, child) => Text(reg.region)),
+  String _country = "United States of America";
+
+  _updateCountry(String newCountry) {
+    setState((){
+      _country = newCountry;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final regionModel = Provider.of<RegionModel>(context);
-    print(regionModel.region);
     return Scaffold(
         backgroundColor: Colors.white,
         body: Container(
           padding: EdgeInsets.fromLTRB(20.0, 70.0, 20.0, 0),
           child: Column(
             children: <Widget>[
-              HeaderSection(isWorld: true),
+              HeaderSection(isWorld: true, countryCallBack: _updateCountry,),
               QuestionSection(),
-              LatestUpdateSection(country: regionModel.region),
+              LatestUpdateSection(country: _country),
             ],
           ),
         ),
@@ -52,6 +55,7 @@ class _LatestUpdateSectionState extends State<LatestUpdateSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        Text(widget.country),
         Container(
           child: Text(
             "COVID-19 Latest Update",
@@ -164,8 +168,9 @@ class QuestionSection extends StatelessWidget {
 
 
 class HeaderSection extends StatefulWidget {
-  HeaderSection({Key key, this.isWorld}) : super(key: key);
+  HeaderSection({Key key, this.isWorld, this.countryCallBack}) : super(key: key);
   final bool isWorld;
+  final ValueChanged<String> countryCallBack;
 
   @override
   _HeaderSectionState createState() => _HeaderSectionState();
@@ -209,7 +214,7 @@ class _HeaderSectionState extends State<HeaderSection>{
               );
             }).toList(),
             onChanged: (newVal) {
-              Provider.of<RegionModel>(context, listen: false).setRegion(newVal);
+              widget.countryCallBack(newVal);
               setState(() {
                 _selectedVal = newVal;
               });
