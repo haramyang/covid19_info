@@ -2,10 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:covid19_info/dataSource.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:auto_size_text/auto_size_text.dart';
 
 const TextStyle regularText =  TextStyle(fontSize: 18.0, fontWeight: FontWeight.w500);
 const TextStyle dropDownSelectedText = TextStyle(fontSize: 24.0, fontWeight: FontWeight.w700, color: Colors.black);
 const TextStyle dropDownItemText = TextStyle(fontSize: 18.0, fontWeight: FontWeight.w700, color: Colors.black87);
+
+class CountryData {
+  final int infected;
+  final int death;
+  final int recovered;
+
+  CountryData({this.infected, this.death, this.recovered});
+}
 
 class WorldDataPage extends StatefulWidget {
   @override
@@ -14,12 +24,42 @@ class WorldDataPage extends StatefulWidget {
 
 class _WorldDataPageState extends State<WorldDataPage> {
 
-  String _country = "United States of America";
+  String _country = "USA";
+
+  Future<CountryData> futureCountryData;
+
+  _getCode(String country) {
+    return DataSource.countryToCode[country];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    futureCountryData = fetchCountryData();
+    print(futureCountryData);
+  }
+
+  Future<CountryData> fetchCountryData() async {
+    final response = await http.get('https://api.thevirustracker.com/free-api?countryTotal='+_getCode(_country));
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      var jsonData = json.decode(response.body);
+      var countryData = jsonData["countrydata"][0];
+      return new CountryData(infected: countryData["total_cases"], death:countryData["total_deaths"], recovered: countryData["total_recovered"]);
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load album');
+    }
+  }
 
   _updateCountry(String newCountry) {
     setState((){
       _country = newCountry;
     });
+    futureCountryData = fetchCountryData();
   }
 
   @override
@@ -32,7 +72,7 @@ class _WorldDataPageState extends State<WorldDataPage> {
             children: <Widget>[
               HeaderSection(isWorld: true, countryCallBack: _updateCountry,),
               QuestionSection(),
-              LatestUpdateSection(country: _country),
+              LatestUpdateSection(futureCountryData: futureCountryData),
             ],
           ),
         ),
@@ -42,20 +82,21 @@ class _WorldDataPageState extends State<WorldDataPage> {
 
 class LatestUpdateSection extends StatefulWidget {
 
-  LatestUpdateSection({Key key, this.country}) : super(key: key);
-  final String country;
+  LatestUpdateSection({Key key, this.futureCountryData}) : super(key: key);
+  final Future<CountryData> futureCountryData;
 
   @override
   _LatestUpdateSectionState createState() => _LatestUpdateSectionState();
 }
 
 class _LatestUpdateSectionState extends State<LatestUpdateSection> {
+
   @override
   Widget build(BuildContext context) {
+    print("HELLO");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(widget.country),
         Container(
           child: Text(
             "COVID-19 Latest Update",
@@ -64,13 +105,25 @@ class _LatestUpdateSectionState extends State<LatestUpdateSection> {
         ),
         SizedBox(height: 20.0),
         Container(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              infoBox("Infected", 57669, 790, Colors.orange),
-              infoBox("Recovered", 59517, 80, Colors.green),
-              infoBox("Dead", 58829, 100, Colors.red),
-            ],
+          child: FutureBuilder<CountryData>(
+            future: widget.futureCountryData,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    infoBox("Infected", 57669, snapshot.data.infected, Colors.orange),
+                    infoBox("Recovered", 59517, snapshot.data.recovered, Colors.green),
+                    infoBox("Dead", 58829, snapshot.data.death, Colors.red),
+                  ],
+                );
+              } else if (snapshot.hasError) {
+                return Text("${snapshot.error}");
+              }
+
+              // By default, show a loading spinner.
+              return CircularProgressIndicator();
+            },
           ),
         ),
       ],
@@ -103,9 +156,10 @@ class _LatestUpdateSectionState extends State<LatestUpdateSection> {
                 color: color,
               ),*/
               SizedBox(height: 20.0),
-              Text(
+              AutoSizeText(
                 '$typeCount',
                 style: TextStyle(color: color, fontSize: 30.0, fontWeight: FontWeight.w600),
+                maxLines: 1,
               ),
               Text(
                 boxType,
@@ -178,7 +232,7 @@ class HeaderSection extends StatefulWidget {
 
 class _HeaderSectionState extends State<HeaderSection>{
 
-  String _selectedVal = 'United States of America';
+  String _selectedVal = 'USA';
   var dt = DateTime.now();
 
   @override
