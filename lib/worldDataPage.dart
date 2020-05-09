@@ -55,6 +55,10 @@ class _WorldDataPageState extends State<WorldDataPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        /*appBar: AppBar(
+          title: Text("COVID-19 Tracker"),
+          backgroundColor: Color.fromRGBO(132, 210, 230, 1.0),
+        ),*/
         backgroundColor: Colors.white,
         body: Container(
           padding: EdgeInsets.fromLTRB(20.0, 70.0, 20.0, 0),

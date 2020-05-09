@@ -4,7 +4,7 @@ class QuestionSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(top: 40.0, bottom: 40.0),
+      margin: EdgeInsets.only(top: 30.0, bottom: 30.0),
       height: 140.0,
       child: Container(
         child: Card(

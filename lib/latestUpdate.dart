@@ -48,7 +48,7 @@ class _LatestUpdateSectionState extends State<LatestUpdateSection> {
             },
           ),
         ),
-        SizedBox(height: 40.0),
+        SizedBox(height: 30.0),
       ],
     );
   }
