@@ -1,3 +1,9 @@
+import 'package:flutter/material.dart';
+
+const TextStyle regularText =  TextStyle(fontSize: 18.0, fontWeight: FontWeight.w500);
+const TextStyle dropDownSelectedText = TextStyle(fontSize: 24.0, fontWeight: FontWeight.w700, color: Colors.black);
+const TextStyle dropDownItemText = TextStyle(fontSize: 18.0, fontWeight: FontWeight.w700, color: Colors.black87);
+
 class DataSource {
   static const List<String> countries =['USA', 'Afghanistan', 'Albania', 'Algeria', 'Angola',
     'Argentina', 'Armenia', 'Australia', 'Austria', 'Azerbaijan', 'Bahamas',
