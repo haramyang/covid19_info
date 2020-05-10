@@ -11,6 +11,26 @@ class _QuestionPageState extends State<QuestionPage> {
   int _numQuestions = 1;
   final int _totalNumQuestions = DataSource.questionAnswers.length;
 
+  ScrollController _controller;
+
+  _scrollListener() {
+    var currPos = _controller.position.pixels;
+    var endPos = _controller.position.maxScrollExtent;
+    var offset = endPos/_totalNumQuestions;
+    if(currPos > 0 && currPos < endPos) {
+      setState(() {
+        _numQuestions = (currPos/offset).ceil().toInt();
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ScrollController();
+    _controller.addListener(_scrollListener);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,7 +72,7 @@ class _QuestionPageState extends State<QuestionPage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
                   Container(
-                    width: MediaQuery.of(context).size.width/1.35,
+                    width: MediaQuery.of(context).size.width/1.4,
                     height: 5.0,
                     child: LinearProgressIndicator(
                       backgroundColor: Colors.grey,
@@ -76,6 +96,7 @@ class _QuestionPageState extends State<QuestionPage> {
               height: 500,
               padding: EdgeInsets.fromLTRB(20.0, 35.0, 20.0, 20.0),
               child: ListView(
+                controller: _controller,
                 children: getQuestionCardsInArea(),
                 scrollDirection: Axis.horizontal,
               ),
