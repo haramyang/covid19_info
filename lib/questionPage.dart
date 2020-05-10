@@ -52,7 +52,7 @@ class _QuestionPageState extends State<QuestionPage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
                   Container(
-                    width: MediaQuery.of(context).size.width/1.4,
+                    width: MediaQuery.of(context).size.width/1.35,
                     height: 5.0,
                     child: LinearProgressIndicator(
                       backgroundColor: Colors.grey,
@@ -64,12 +64,20 @@ class _QuestionPageState extends State<QuestionPage> {
                   RichText(
                     text: TextSpan(
                       children: <TextSpan>[
-                        TextSpan(text: "$_numQuestions ", style: TextStyle(color: Colors.white, fontSize: 26.0, fontWeight: FontWeight.w800)),
-                        TextSpan(text: "/ $_totalNumQuestions", style: TextStyle(color: Colors.white, fontSize: 24.0, fontWeight: FontWeight.w500))
+                        TextSpan(text: "$_numQuestions", style: TextStyle(color: Colors.white, fontSize: 26.0, fontWeight: FontWeight.w800)),
+                        TextSpan(text: "/$_totalNumQuestions", style: TextStyle(color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.w500))
                       ],
                     ),
                   ),
                 ],
+              ),
+            ),
+            Container(
+              height: 500,
+              padding: EdgeInsets.fromLTRB(20.0, 35.0, 20.0, 20.0),
+              child: ListView(
+                children: getQuestionCardsInArea(),
+                scrollDirection: Axis.horizontal,
               ),
             ),
           ],
@@ -77,4 +85,82 @@ class _QuestionPageState extends State<QuestionPage> {
       ),
     );
   }
+
+  List<Question> getQuestions() {
+    List<Question> questions = [];
+    for(int i = 0; i < DataSource.questionAnswers.length; ++i) {
+      questions.add(Question(DataSource.questionAnswers[i]["question"], DataSource.questionAnswers[i]["answer"]));
+    }
+
+    return questions;
+  }
+
+  List<Widget> getQuestionCardsInArea() {
+    List<Widget> questionCards = [];
+    List<Question> questions = getQuestions();
+
+    for(Question question in questions) {
+      questionCards.add(questionCard(question));
+    }
+
+    return questionCards;
+  }
+
+  Widget questionCard(Question question) {
+    return Container(
+      width: 300,
+      padding: EdgeInsets.all(20.0),
+      margin: EdgeInsets.only(right: 30.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+        color: Colors.white,
+        boxShadow: [
+          new BoxShadow(
+            color: Colors.grey,
+            blurRadius: 8.0,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            padding: EdgeInsets.only(bottom: 20.0),
+            child: Row(
+              children: <Widget>[
+                Text("#covid-19 ", style: TextStyle(color: Colors.black54, )),
+                Text("#haramyang", style: TextStyle(color: Colors.black54, )),
+              ],
+            ),
+          ),
+          Container(
+            height: 100.0,
+            padding: EdgeInsets.only(bottom: 10.0),
+            child: AutoSizeText(
+              question.question,
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.w600),
+              maxLines: 4,
+            ),
+          ),
+          Container(
+            //color: Colors.red,
+            height: 250.0,
+            child: AutoSizeText(
+              "Answer: "+ question.answer,
+              style: TextStyle(fontSize: 25, ),
+              maxLines: 10,
+              minFontSize: 18.0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class Question {
+  final String question;
+  final String answer;
+
+  Question(this.question, this.answer);
 }
