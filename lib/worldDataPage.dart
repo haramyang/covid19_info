@@ -4,8 +4,27 @@ import 'package:covid19_info/headerSection.dart';
 import 'package:covid19_info/latestUpdate.dart';
 import 'package:covid19_info/countryData.dart';
 import 'package:covid19_info/questionSection.dart';
-import 'package:http/http.dart' as http;
+import 'package:covid19_info/apiHandler.dart';
 import 'dart:convert';
+import 'package:charts_flutter/flutter.dart' as charts;
+
+
+class ChartData {
+  int month;
+  int day;
+  int year;
+  int count;
+
+  ChartData(this.month, this.day, this.year, this.count);
+}
+
+class TimeSeriesCount {
+  final DateTime time;
+  final int count;
+  final charts.Color barColor;
+
+  TimeSeriesCount({this.time, this.count, this.barColor});
+}
 
 class WorldDataPage extends StatefulWidget {
   @override
@@ -17,32 +36,61 @@ class _WorldDataPageState extends State<WorldDataPage> {
   String _country = "USA";
 
   Future<CountryData> futureCountryData;
+  Future<List<TimeSeriesCount>> futureCountryCountData;
+  List<ChartData> chartData = [];
 
   _getCode(String country) {
     return DataSource.countryToCode[country];
+  }
+
+  _formatChartData(var data) {
+    data.remove("stat");
+    data.forEach((k,v) {
+      List<String> dates = k.split('/');
+      int count = v["new_daily_cases"];
+      ChartData c = new ChartData(int.parse(dates[0]), int.parse(dates[1]), 2020, count);
+      chartData.add(c);
+    });
+  }
+
+  _getLast20Dates(List<ChartData> data) {
+    final List<TimeSeriesCount> seriesList = [];
+    for(int i = data.length-20; i < data.length; ++i) {
+      ChartData c = data[i];
+      print("${c.month}/${c.day}");
+      seriesList.add(TimeSeriesCount(
+        time: new DateTime(c.year, c.month, c.day),
+        count: c.count,
+        barColor: charts.ColorUtil.fromDartColor(Colors.blue),
+      ));
+    }
+
+    return seriesList;
   }
 
   @override
   void initState() {
     super.initState();
     futureCountryData = fetchCountryData();
-    print(futureCountryData);
+    futureCountryCountData = fetchCountryCountData();
+  }
+
+  Future<List<TimeSeriesCount>> fetchCountryCountData() async {
+    final response = await API.getData('countryTimeline=' + _getCode(_country));
+
+    var jsonData = json.decode(response.body);
+    var countryData = jsonData["timelineitems"][0];
+    _formatChartData(countryData);
+    return _getLast20Dates(chartData);
+
   }
 
   Future<CountryData> fetchCountryData() async {
-    final response = await http.get('https://api.thevirustracker.com/free-api?countryTotal='+_getCode(_country));
 
-    if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-      var jsonData = json.decode(response.body);
-      var countryData = jsonData["countrydata"][0];
-      return new CountryData(infected: countryData["total_cases"], death:countryData["total_deaths"], recovered: countryData["total_recovered"]);
-    } else {
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      throw Exception('Failed to load album');
-    }
+    final response = await API.getData('countryTotal=' + _getCode(_country));
+    var jsonData = json.decode(response.body);
+    var countryData = jsonData["countrydata"][0];
+    return new CountryData(infected: countryData["total_cases"], death:countryData["total_deaths"], recovered: countryData["total_recovered"]);
   }
 
   _updateCountry(String newCountry) {
@@ -50,6 +98,7 @@ class _WorldDataPageState extends State<WorldDataPage> {
       _country = newCountry;
     });
     futureCountryData = fetchCountryData();
+    futureCountryCountData = fetchCountryCountData();
   }
 
   @override
@@ -68,7 +117,7 @@ class _WorldDataPageState extends State<WorldDataPage> {
               HeaderSection(isWorld: true, countryCallBack: _updateCountry,),
               QuestionSection(),
               LatestUpdateSection(futureCountryData: futureCountryData),
-              ActiveCases(),
+              ActiveCases(data: futureCountryCountData),
             ],
           ),
         ),
@@ -77,6 +126,10 @@ class _WorldDataPageState extends State<WorldDataPage> {
 }
 
 class ActiveCases extends StatefulWidget {
+
+  ActiveCases({this.data});
+  final Future<List<TimeSeriesCount>> data;
+
   @override
   _ActiveCasesState createState() => _ActiveCasesState();
 }
@@ -85,6 +138,7 @@ class _ActiveCasesState extends State<ActiveCases> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Container(
           child: Text(
@@ -92,8 +146,67 @@ class _ActiveCasesState extends State<ActiveCases> {
             style: dropDownSelectedText,
           ),
         ),
+        Container(child: CoronaCountChart(futureCountryCountData: widget.data),),
       ],
     );
   }
 }
+
+
+class CoronaCountChart extends StatelessWidget {
+  Future<List<TimeSeriesCount>> futureCountryCountData;
+
+  CoronaCountChart({this.futureCountryCountData});
+
+  List<TimeSeriesCount> _getList(Future<List<TimeSeriesCount>> data) {
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+
+    return Container(
+      height: 250,
+      padding: EdgeInsets.all(20),
+      child: Card(
+        child: Column(
+          children: <Widget>[
+            FutureBuilder(
+              future: futureCountryCountData,
+              builder: (context, snapshot) {
+                List<charts.Series<TimeSeriesCount, DateTime>> series
+                = [
+                  charts.Series(
+                    id: "Corona Count",
+                    data: snapshot.data,
+                    domainFn: (TimeSeriesCount series, _) => series.time,
+                    measureFn: (TimeSeriesCount series, _) => series.count,
+                    colorFn: (TimeSeriesCount series, _) => series.barColor,
+                  )
+                ];
+
+                if (snapshot.hasData) {
+                  return Expanded(
+                    child: charts.TimeSeriesChart(
+                      series,
+                      animate: true,
+                      defaultRenderer: new charts.BarRendererConfig<DateTime>(),
+                      defaultInteractions: false,
+                      behaviors: [new charts.SelectNearest(), new charts.DomainHighlighter()],
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                  return Text("${snapshot.error}");
+                }
+                // By default, show a loading spinner.
+                return CircularProgressIndicator();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
