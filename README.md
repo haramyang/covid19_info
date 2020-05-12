@@ -1,6 +1,6 @@
 # covid19_info
 
-A new Flutter project.
+Covid-19 Tracker
 
 ## Getting Started
 

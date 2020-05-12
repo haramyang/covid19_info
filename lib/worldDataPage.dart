@@ -158,19 +158,23 @@ class CoronaCountChart extends StatelessWidget {
 
   CoronaCountChart({this.futureCountryCountData});
 
-  List<TimeSeriesCount> _getList(Future<List<TimeSeriesCount>> data) {
-  }
-
   @override
   Widget build(BuildContext context) {
 
 
     return Container(
       height: 250,
-      padding: EdgeInsets.all(20),
+      padding: EdgeInsets.only(top: 5.0),
       child: Card(
         child: Column(
           children: <Widget>[
+            Text(
+                "New cases vs Last 20 days",
+                style: TextStyle(
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.w600,
+                ),
+            ),
             FutureBuilder(
               future: futureCountryCountData,
               builder: (context, snapshot) {
